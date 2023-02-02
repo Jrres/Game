@@ -28,6 +28,13 @@
     button:hover {
       background-color: #ddd;
     }
+    #movableText{
+      animation: slider 2s;
+    }
+    @keyframes slider{
+      from { transform: translateX(100px);}
+      to { transform:translateX(0px)}
+    }
   </style>
 </head>
 
@@ -47,7 +54,8 @@
     "
   ></div>
 
-  <canvas></canvas>
+  <canvas> </canvas>
+ 
   <div
     id="characterDialogueBox"
     style="
@@ -152,7 +160,7 @@
           cursor: pointer;
         "
       >
-        sdkfjlsdajl
+
       </div>
       <div
         id="attacksBox"
@@ -188,6 +196,10 @@
   crossorigin="anonymous"
   referrerpolicy="no-referrer"
 ></script>
+<script src = "js/items.js"></script>
+<script src ="data/enemys.js"></script> 
+<script src="data/doors.js"></script>
+<script src="data/chests.js"></script>
 <script src="data/audio.js"></script>
 <script src="data/battleZones.js"></script>
 <script src="data/collisions.js"></script>
@@ -198,3 +210,4 @@
 <script src="classes.js"></script>
 <script src="index.js"></script>
 <script src="battleScene.js"></script>
+<script src ="dialogueScene.js"></script>

@@ -10,7 +10,7 @@ let bg = new Sprite({
         y: 0
     },
     image:backDia,
-    scale:5
+    scale:2
 })
 let wz = new Sprite({
     position: {

@@ -1,12 +1,15 @@
+
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
 canvas.width = screen.width
 canvas.height = screen.height
 
-let level = 1;
 
+let level = 3;
+let currLoot;
 let animId
-
+let running = false;
+let hasEnter = false
 let isEnemy = false; 
 function Partition(data){
 const Map = [] 
@@ -26,6 +29,12 @@ const collisionsDataMap1 = Partition(collisionsData1)
 const chestsMap1 = Partition(chestsData1)
 const doorsMap1 = Partition(doorData1)
 
+const collisionsDataMap2 = Partition(collisions3)
+const enemyDataMap2 = Partition(enemiesData2)
+const doorsMap2 = Partition(doorsData3)
+const gatesMap = Partition(gates)
+const chestsMap2 = Partition(chestData2)
+
 const offset1 = {
   x: -900,
   y: -3300
@@ -36,17 +45,44 @@ const offset2 = {
   y: -1500
 }
 
-function CreateEnemies(Map, offset, image){
+const offset3 = {
+  x: -1330,
+  y:-1200
+}
+function createGates(Map,image,offset,width,height){
+  const gate = []
+  Map.forEach((row,i)=>{
+    row.forEach((symbol,j)=>{
+      if(symbol===178){
+        gate.push(new Sprite({
+          position:{
+            x: j * width + offset.x,
+              y: i * height + offset.y
+          },
+          image:image,
+          frames: {
+            max:3,
+            hold:20
+          },
+          animate:true,
+
+        }))
+      }
+    })
+  })
+  return gate
+}
+function CreateEnemies(Map, offset, image,width,height){
   const enemies  = [] 
   let tag = 0;
   Map.forEach((row, i) => {
     row.forEach((symbol, j) => {
-      if (symbol === 504)
+      if (symbol === 504 || symbol === 386)
         enemies.push(
           new Enemy({
             position: {
-              x: j * Boundary.width + offset.x,
-              y: i * Boundary.height + offset.y
+              x: j * width + offset.x,
+              y: i * height + offset.y
             },
             velocity:5,
             image:image,
@@ -71,16 +107,16 @@ let enemies;
 let enemy;
 
 //takes the collisions map
-function CreateBoundaries(Map,offset){
+function CreateBoundaries(Map,offset,width,height){
   const boundaries = []
   Map.forEach((row, i) => {
     row.forEach((symbol, j) => {
-      if (symbol === 34 || symbol === 386)
+      if (symbol === 34 || symbol === 386 || symbol === 231)
         boundaries.push(
           new Boundary({
             position: {
-              x: j * Boundary.width + offset.x,
-              y: i * Boundary.height + offset.y
+              x: j * width + offset.x,
+              y: i * height + offset.y
             }
           })
         )
@@ -92,7 +128,7 @@ let boundaries;
 
 
 //takes the chracters map , image array  
-function CreateCharacters(Map,images,offset){
+function CreateCharacters(Map,images,offset,width,height){
   const characters = []
   Map.forEach((row, i) => {
     row.forEach((symbol, j) => {
@@ -101,8 +137,8 @@ function CreateCharacters(Map,images,offset){
         characters.push(
           new Character({
             position: {
-              x: j * Boundary.width + offset.x,
-              y: i * Boundary.height + offset.y-150
+              x: j * width + offset.x,
+              y: i * height + offset.y-150
             },
             image: images[0],
             frames: {
@@ -121,8 +157,8 @@ function CreateCharacters(Map,images,offset){
         characters.push(
           new Character({
             position: {
-              x: j * Boundary.width + offset.x,
-              y: i * Boundary.height + offset.y
+              x: j * width + offset.x,
+              y: i * height + offset.y
             },
             image: images[1],
             frames: {
@@ -151,16 +187,16 @@ let characters;
 
 
 //takes the chest Map , chest Image , loot image array
-function CreateChests ( Map , chest, items,offset) {
+function CreateChests ( Map , chest, items,offset,width,height) {
   const chestObj = []
   Map.forEach((row,i)=>{
     row.forEach((symbol,j)=>{
-      if(symbol === 596 || symbol === 660){
+      if(symbol === 596 || symbol === 660 || symbol === 1255){
         chestObj.push(
           new Chest({
             position:{
-              x: j * Boundary.width + offset.x,
-              y: i * Boundary.height + offset.y
+              x: j * width + offset.x,
+              y: i * height + offset.y
             },frames:{
               max:3,
               hold: 60, 
@@ -169,8 +205,8 @@ function CreateChests ( Map , chest, items,offset) {
             animate:false,
             loot:new Loot({
               position:{
-              x: j * Loot.width + offset.x,
-              y: i * Loot.height + offset.y
+              x: j * width + offset.x,
+              y: i * height + offset.y
             },
             image:items
             })
@@ -192,6 +228,7 @@ while(numitems>0){
 
   let ImageItem = new Image();
   ImageItem.src = AllItems[val].src;
+  ImageItem.id= AllItems[val].type;
   items.push(ImageItem);
   numitems--;
 }
@@ -205,17 +242,17 @@ chest.src =  " img/chest.png"
 let chestObj;
 
 
-function CreateDoors(Map , offset){
+function CreateDoors(Map , offset,width,height){
 const doors = []
 let count =1;
   Map.forEach((row, i) => {
     row.forEach((symbol, j) => {
-      if (symbol === 1443 || symbol == 418)
+      if (symbol === 1443 || symbol == 418 || symbol ===451)
         doors.push(
           new Door({
             position: {
-              x: j * Boundary.width + offset.x,
-              y: i * Boundary.height + offset.y
+              x: j * width + offset.x,
+              y: i * height + offset.y
             },
             number: count++
           })
@@ -230,6 +267,8 @@ const image = new Image()
 image.src = './img/level1.jpg'
 const image2 = new Image()
 image2.src = './img/level2.jpg'
+const image3 = new Image()
+image3.src = "./img/level3.jpg"
 
 const playerDownImage = new Image()
 playerDownImage.src = './img/playerDown.png'
@@ -271,8 +310,8 @@ let player = new Sprite({
       gsap.to(overlay,{
         opacity:0,
         onComplete: ()=>{
-          level++;
-          Levels[level].init() 
+          
+          Levels[level+1].init() 
           gsap.to(overlay,{
             opacity:1
           })
@@ -314,12 +353,10 @@ const keys = {
 const isClick = {
   onEnemy:()=>{ 
     enemy.TakeDamage();
-    
-    console.log(enemy.name)
   },
   ShowHealth:()=>{
     enemy.ShowHealth()
-    enemy.AnimateLoss();
+    
   },
   on : false
 }
@@ -336,11 +373,11 @@ let Levels = {
         },
         image: image
       })
-      doors =CreateDoors(doorsMap,offset1)
-      chestObj = CreateChests(chestsMap,chest,items,offset1)
-      boundaries =CreateBoundaries(collisionsDataMap, offset1)
-      characters = CreateCharacters(charactersMap,charImgs,offset1 )
-
+      doors =CreateDoors(doorsMap,offset1,Boundary.width,Boundary.height)
+      chestObj = CreateChests(chestsMap,chest,items,offset1,Loot.width,Loot.height)
+      boundaries =CreateBoundaries(collisionsDataMap, offset1,Boundary.width,Boundary.height)
+      characters = CreateCharacters(charactersMap,charImgs,offset1,Boundary.width,Boundary.height )
+      isEnemy=false
       movables = [
         background,
         ...chestObj,
@@ -356,10 +393,12 @@ let Levels = {
         ...doors,
         player,
       ]
+      hasEnter=false;
     }
   },
   2:{
     init: ()=>{
+      level++
       background =new Sprite({
         position: {
           x: offset2.x,
@@ -367,11 +406,11 @@ let Levels = {
         },
         image: image2
       })
-      enemies = CreateEnemies(enemyDataMap,offset2,mob1)
-      doors =CreateDoors(doorsMap1,offset2)
-      chestObj = CreateChests(chestsMap1,chest,items,offset2)
-      boundaries =CreateBoundaries(collisionsDataMap1, offset2)
-      characters = CreateCharacters(charactersMap,charImgs,offset2 )
+      enemies = CreateEnemies(enemyDataMap,offset2,mob1,Boundary.width,Boundary.height)
+      doors =CreateDoors(doorsMap1,offset2,Boundary.width,Boundary.height)
+      chestObj = CreateChests(chestsMap1,chest,items,offset2,Loot.width,Loot.height)
+      boundaries =CreateBoundaries(collisionsDataMap1, offset2,Boundary.width,Boundary.height)
+      characters = CreateCharacters(charactersMap,charImgs,offset2,Boundary.width,Boundary.height )
 
       isEnemy=true;
       
@@ -390,9 +429,67 @@ let Levels = {
         ...characters,
         ...doors,
         player,
-        ...enemies
+        ...enemies,
       ]
+      if(currLoot){
+        renderables.push(currLoot)
+      }
+
+      hasEnter=false;
+    }
+  },
+  3:{
+    init: ()=>{
+      level++
+      background =new Sprite({
+        position: {
+          x: offset3.x,
+          y: offset3.y
+        },
+        image: image3,
+        scale:.5
+      })
+      const gateimg = new Image()
+      gateimg.src = "./img/gate.png"
+      enemies = CreateEnemies(enemyDataMap2,offset3,mob1,Boundary.width,Boundary.height)
+      doors =CreateDoors(doorsMap2,offset3,Boundary.width,Boundary.height)
+      chestObj =[ new Sprite({position:{
+        x:-1428,
+        y:-1732
+      },
+      image:chest,
+      inventory:items,
+      frames:{
+        max:3,
+        hold:60
+      }
+    })]
+      boundaries =CreateBoundaries(collisionsDataMap2, offset3,Boundary.width,Boundary.height)
+      let gate = createGates(gatesMap,gateimg,offset3,Boundary.width,Boundary.height)
+      isEnemy=true;
       
+      console.log(gate)
+       movables = [
+        background,
+        ...chestObj,
+        ...boundaries,
+        ...doors,
+        ...enemies,
+    
+      ]
+      renderables = [
+        background,
+        ...chestObj,
+        ...boundaries,
+        ...doors,
+        player,
+        ...enemies,
+        ...gate
+      ]
+      if(currLoot){
+        renderables.push(currLoot)
+      }
+      hasEnter=false;
     }
   }
 }
@@ -425,49 +522,149 @@ const Timer = (event, interval = 0) => {
       }
   };
 };
+var slash;
+var isSlash=false;
+var lastTime;
+var requiredElapsed = 1000 / 5; // desired interval is 10fps
+var counts=0
+var inCombat = false
 
-const fooLogger = Timer((timer) => {
+var timeToAttack=0
+let heartimage = new Image()
+    heartimage.src="./img/heart2.png"
 
-  timer.interval = 1000 + Math.floor(Math.random() * 1000);
-
-}, 1500);
-
+    let heart = new Sprite({
+      position:{
+        x:player.position.x,
+        y:player.position.y
+      },
+      image:heartimage,
+      frames:{
+        max:5,
+        hold:10
+      },
+      name:"heart"
+    })
+function isFollow(enemies){
+  for(let x = 0 ; x<enemies.length;x++){
+    if(enemies[x].following)
+    return true
+  }
+  return false;
+}
 function animate(time) {
-fooLogger.update(time)
-animId = window.requestAnimationFrame(animate)
+  
+  animId = window.requestAnimationFrame(animate)
+  if (!lastTime) { lastTime = time; }
+  var elapsed = time - lastTime;
+  if(!isNaN(elapsed))
+  timeToAttack+=elapsed
 
-
+  console.log(background.position)
+  if (elapsed > requiredElapsed) {
+      // do stuff
+      lastTime = time;
+  }
 renderables.forEach((renderable) => {
     renderable.draw()
   })
 
   let moving = true
   player.animate = false
+  player.ShowHealth()
+
 
   canvas.style.opacity = overlay.opacity
-  // activate a battle
+  // heal player below 80 health
+  let temp = heart.position
+  if(player.health<=80){
+    //time to start healing
+    counts+=elapsed
+    if(counts>=2000 &&!inCombat){
+      heart.animate=true
+      heart.draw()
+      heart.position=temp;
+      let r = 5 * Math.sqrt(Math.random())
+      let theta = Math.random() * 2 * Math.PI
+      heart.position.x = heart.position.x + r * Math.cos(theta)
+      heart.position.y = heart.position.y + r * Math.sin(theta)
+    }
+    if (counts>=5000 && !inCombat ){
+      player.health+=10
+      counts=0
+      heart.animate=true
+      heart.draw()
+      heart.position=temp;
+      let r = 5 * Math.sqrt(Math.random())
+      let theta = Math.random() * 2 * Math.PI
+      heart.position.x = heart.position.x + r * Math.cos(theta)
+      heart.position.y = heart.position.y + r * Math.sin(theta)
 
-  if( isEnemy){
-
+      
+    }
+  }
+  //slash animation
+  if(isSlash){
+    slash.draw()
+    counts+=elapsed
+    if(counts>=5000){
+      isSlash=false;
+      counts=0
+    }
+  }
+  if(player.kill){
+    let deathimg = new Image()
+    deathimg.src = "./img/death.png"
+    c.font="20px arial"
+    c.fillText("You died",player.position.x,player.position.y,200)
+    player = new Sprite({
+      position:player.position,
+      image:deathimg
+    })
+    renderables.filter(val=>val!=player)
+    renderables.push(player)
+  }
+  if(isEnemy && enemies.length==0)
+  isEnemy=false;
+  if(isEnemy){
     for(let i =0 ; i<enemies.length;i++){
       const enemy = enemies[i]
+
+   
+      if(enemy.health<=0){
+        renderables = renderables.filter((val)=>val!=enemy)
+        movables = movables.filter((val)=>val!=enemy)
+        enemies = enemies.filter(v=>v!=enemy)
+      }
       if(inRange({
         player:player,
         enemy:enemy
       })){
         enemy.follow(player)
         enemy.animate = true; 
+        enemy.following = true;
+        if(timeToAttack>=15000){
+          enemy.attack(player)
+          timeToAttack=0
+          
+        }
+      } 
+      else{
+        inCombat=false;
       }
-      if(rectangularCollision(
-      {rectangle1:player,
-      rectangle2:enemy})){
-        
-      //attack after every second
-      //enemy.attack(player)
+      if(!isFollow(enemies)){
+
+        inCombat=false;
+      }
+      else{
+        inCombat=true;
       }
     }
+  }else{
+    inCombat=false;
+
   }
-  
+
   if(keys.i.pressed){
     player.showInventory();
    let c
@@ -494,7 +691,7 @@ renderables.forEach((renderable) => {
   if(keys.e.pressed && checkForChestCollision({
     r1:chestObj,r2:player
   }) ){
-    
+    console.log("Col")
     const ch = getChest()
     if(ch != null ){
        ch.animate = true;
@@ -504,9 +701,64 @@ renderables.forEach((renderable) => {
         
         if(ch.loot.KeyNum[x]){
           //2 interactables either put on character or put in inventory
-          let obj = ch.key(player)
-          LootAction(renderables,player,obj)
-          
+    
+      
+          let num = 0;
+          if(x=="one")
+          num=0
+          if(x=="two")
+          num=1
+          if(x=="three")
+          num=2
+      
+          var itemfromchest;
+         
+          if(items[num].id==="boots"){
+          itemfromchest= new Sprite({
+            position:{
+              x:player.position.x,
+              y:player.position.y+50
+            },
+            image:ch.loot.image[num],
+            name:"item",
+            scale:1
+          })
+        }
+        else if(items[num].id=="chest"){
+          itemfromchest= new Sprite({
+            position:{
+              x:player.position.x,
+              y:player.position.y
+            },
+            image:ch.loot.image[num],
+            name:"item",
+            scale:1
+          })
+        }
+        else if(items[num].id=="helm"){
+          itemfromchest= new Sprite({
+            position:{
+              x:player.position.x,
+              y:player.position.y-50
+            },
+            image:ch.loot.image[num],
+            name:"item",
+            scale:1
+          })
+        }
+        else if(items[num].id=="glove"){
+        itemfromchest= new Sprite({
+          position:{
+            x:player.position.x+50,
+            y:player.position.y
+          },
+          image:ch.loot.image[num],
+          name:"item",
+          scale:1
+        })
+      }
+          renderables.push(itemfromchest)
+          currLoot = itemfromchest
         }
       }
     }
@@ -519,9 +771,11 @@ renderables.forEach((renderable) => {
         rectangle1:player,
         rectangle2:{...door
       }
-      })){
+      }) && !hasEnter){
+
         player.enter.onComplete();
-        
+        hasEnter=true
+        break
         //change level
       }
     }
@@ -529,7 +783,7 @@ renderables.forEach((renderable) => {
   if (keys.w.pressed && lastKey === 'w') {
     player.animate = true
     player.image = player.sprites.up
-
+    if(characters)
     checkForCharacterCollision({
       characters,
       player,
@@ -562,7 +816,7 @@ renderables.forEach((renderable) => {
   } else if (keys.a.pressed && lastKey === 'a') {
     player.animate = true
     player.image = player.sprites.left
-
+    if(characters)
     checkForCharacterCollision({
       characters,
       player,
@@ -595,7 +849,7 @@ renderables.forEach((renderable) => {
   } else if (keys.s.pressed && lastKey === 's') {
     player.animate = true
     player.image = player.sprites.down
-
+    if(characters)
     checkForCharacterCollision({
       characters,
       player,
@@ -628,7 +882,7 @@ renderables.forEach((renderable) => {
   } else if (keys.d.pressed && lastKey === 'd') {
     player.animate = true
     player.image = player.sprites.right
-
+    if(characters)
     checkForCharacterCollision({
       characters,
       player,
@@ -750,7 +1004,38 @@ window.addEventListener('keyup', (e) => {
       break;
   }
 })
-window.addEventListener('click',(e)=>{
+canvas.addEventListener('click',(e)=>{
+
+  //add sword animation
+  isSlash=true
+  let slashimg1 = new Image()
+  slashimg1.src= "./img/slash/s.png"
+  let slashimg2 = new Image()
+  slashimg2.src= "./img/slash/s2.png"
+  let slashimg3 = new Image()
+  slashimg3.src= "./img/slash/s3.png"
+  let slashimg4 = new Image()
+  slashimg4.src= "./img/slash/s4.png"
+  let slashimg5 = new Image()
+  slashimg5.src= "./img/slash/s5.png"
+  slash = new Sprite({
+    position:{x:e.x-60,y:e.y-190},
+    image:slashimg1,
+    frames:{
+      max:6,
+      hold:10
+    },
+    sprites:{
+      first:slashimg1,
+      second:slashimg2,
+      third:slashimg3,
+      fourth:slashimg4,
+      fifth:slashimg5
+    },animate:true,
+    scale:.7
+  })
+  
+
   //add enemy hit collision
   let hit= {
     position:{
@@ -760,6 +1045,7 @@ window.addEventListener('click',(e)=>{
     width:player.width,
     height:player.height
   }
+  if(enemies)
   for(let i =0 ; i< enemies.length;i++){
     //enemy is global to set the current enemy
     enemy =enemies[i];
@@ -769,11 +1055,13 @@ window.addEventListener('click',(e)=>{
       rectangle2:enemy
     })){
       isClick.onEnemy();
-      isClick.on = true;
+      isClick.on = true;  
+      enemy.knockback()
       return 
     }
   }
 })
+
 let clicked = false
 // addEventListener('click', () => {
 //   if (!clicked) {
@@ -781,3 +1069,22 @@ let clicked = false
 //     clicked = true
 //   }
 // })
+let cont = document.getElementsByClassName("container")[0]
+let root = document.getElementsByClassName("btn-group-vertical d-flex justify-content-center")[0]
+let btn = document.createElement("button")
+btn.append(document.createTextNode("Start playing"))
+btn.className="btn btn-primary"
+btn.addEventListener("click",()=>{
+animate()
+cont.remove()
+
+})
+root.append(btn)
+let btn1 = document.createElement("button")
+btn1.append(document.createTextNode("Continue"))
+btn1.className="btn btn-primary"
+root.append(btn1)
+let btn2 = document.createElement("button")
+btn2.append(document.createTextNode("Settings"))
+btn2.className="btn btn-primary"
+root.append(btn2)

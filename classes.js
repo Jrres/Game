@@ -12,6 +12,7 @@ class Sprite {
     name,
     enterDoor
   }) {
+    this.kill=false
     this.enter = enterDoor;
     this.name = name
     this.position = position
@@ -36,8 +37,21 @@ class Sprite {
     }
     this.weapon
     this.child
-    //this.health = 100
+    this.health = 100
 
+  }
+  ShowHealth(){
+    c.globalAlpha=1
+    c.fillStyle="black"
+    c.fillRect(30,55,55,20)
+    c.fillStyle = "white"
+    c.font = "bold 20px serif";
+    c.fillText(this.name,500,60)
+    c.fillStyle="green"
+    c.fillRect(500,80,this.health,40)
+    c.fillStyle ="white"
+    c.font = "bold 28px serif";
+    c.fillText(this.health,620,110,40)
   }
   setWeaponName(str) {
     this.weapon = str;
@@ -149,10 +163,7 @@ class Sprite {
           return
         }, 1000)
         break;
-
     }
-
-
   }
 }
 
@@ -225,6 +236,15 @@ class Enemy extends Sprite {
     this.attacks = ["AA", "fire"]
     this.health=health
     this.name=name;
+    this.delete = false;
+    this.following = false;
+  }
+  knockback(){
+      // let vx =  Math.sin(2)*(this.position.x-40)*.05
+      // let vy = (this.position.y-40)*.05
+      // this.position.x-=vx
+      // this.position.y-=vy
+
   }
   ShowHealth(){
 
@@ -246,9 +266,10 @@ class Enemy extends Sprite {
     // })
   }
   TakeDamage(){
-    console.log(this.health)
-    if(this.health>0)
-    this.health-=5;
+    let num = Math.random()*5+5
+    if(this.health>0){
+    this.health-=num;
+    }
     else{
       return
     }
@@ -292,41 +313,35 @@ class Enemy extends Sprite {
     this.position.y += Vy
   }
   attack(player) {
-
-
-    let attack = this.attacks[Math.floor(Math.random() * 2)]
-    switch (attack) {
-      case "AA": {
-        player.health -= 2;
-        console.log(player.health)
-      }
-      case "fire": {
-        player.health -= 5;
-        c.fillText = player.health
-      }
+    if(player.health>0)
+    player.health-=5
+    else{
+      player.kill= true
     }
   }
 }
 class Boundary {//scaled 2 times
-  static width = 88
+  static width=88
   static height = 88
+
   constructor({ position }) {
     this.position = position
-    this.width = 88
-    this.height = 88
+    this.width =88
+    this.height=88
   }
 
   draw() {
-    // c.fillStyle = 'rgba(255, 0, 0, 1)'
-    // c.fillRect(this.position.x, this.position.y, this.width, this.height)
+    //c.fillStyle = 'rgba(255, 0, 0, 1)'
+    //c.fillRect(this.position.x, this.position.y, this.width, this.height  )
   }
 }
 //image needs to be array of images to put into chest
 //chest width and height
 //num rows cols
 class Loot {
-  static width = 88
-  static height = 88;
+  static width = 20
+  static height = 10;
+
   constructor({
     position, image
   }) {
@@ -350,9 +365,6 @@ class Loot {
 
     }
     //console.log(this.keyNum[0])
-
-  }
-  draw() {
 
   }
   key() {
@@ -440,6 +452,7 @@ class Chest extends Sprite {
 
   }
   key(player) {
+    console.log(this.loot.keyNum)
     for (let x in this.loot.KeyNum) {
 
       if (this.loot.KeyNum[x]) {

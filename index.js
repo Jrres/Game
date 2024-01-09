@@ -5,7 +5,7 @@ canvas.width = screen.width
 canvas.height = screen.height
 
 
-let level = 3;
+let level = 1;
 let currLoot;
 let animId
 let running = false;

@@ -36,18 +36,18 @@ const gatesMap = Partition(gates)
 const chestsMap2 = Partition(chestData2)
 
 const offset1 = {
-  x: -900,
-  y: -3300
+  x: -500,
+  y: -3000
 }
 //level 2
 const offset2 = {
-  x: -1200,
-  y: -1500
+  x: -600,
+  y: -1300
 }
 
 const offset3 = {
-  x: -1330,
-  y:-1200
+  x: -850,
+  y:-1000
 }
 function createGates(Map,image,offset,width,height){
   const gate = []
@@ -285,6 +285,7 @@ playerRightImage.src = './img/playerRight.png'
 
 let inv= new Array(8)
 
+let message
 
 let player = new Sprite({
   position: {
@@ -377,13 +378,17 @@ let Levels = {
       chestObj = CreateChests(chestsMap,chest,items,offset1,Loot.width,Loot.height)
       boundaries =CreateBoundaries(collisionsDataMap, offset1,Boundary.width,Boundary.height)
       characters = CreateCharacters(charactersMap,charImgs,offset1,Boundary.width,Boundary.height )
+      message = new Message({
+        position:{x:900,y:800},
+        level:1
+      })
       isEnemy=false
       movables = [
         background,
         ...chestObj,
         ...boundaries,
         ...characters,
-        ...doors
+        ...doors,
       ]
       renderables = [
         background,
@@ -393,6 +398,8 @@ let Levels = {
         ...doors,
         player,
       ]
+      renderables.push(message)
+      movables.push(message)
       hasEnter=false;
     }
   },
@@ -468,7 +475,7 @@ let Levels = {
       let gate = createGates(gatesMap,gateimg,offset3,Boundary.width,Boundary.height)
       isEnemy=true;
       
-      console.log(gate)
+     
        movables = [
         background,
         ...chestObj,
@@ -560,7 +567,7 @@ function animate(time) {
   if(!isNaN(elapsed))
   timeToAttack+=elapsed
 
-  console.log(background.position)
+
   if (elapsed > requiredElapsed) {
       // do stuff
       lastTime = time;
@@ -662,7 +669,6 @@ renderables.forEach((renderable) => {
     }
   }else{
     inCombat=false;
-
   }
 
   if(keys.i.pressed){
@@ -691,7 +697,7 @@ renderables.forEach((renderable) => {
   if(keys.e.pressed && checkForChestCollision({
     r1:chestObj,r2:player
   }) ){
-    console.log("Col")
+    
     const ch = getChest()
     if(ch != null ){
        ch.animate = true;
@@ -914,6 +920,8 @@ renderables.forEach((renderable) => {
       })
   }
 
+  
+
   if(player.interactionAsset && !player.interactionAsset.hasInteracted){
     let movingText = document.createElement("span")
     movingText.setAttribute("id","movableText")
@@ -927,7 +935,16 @@ renderables.forEach((renderable) => {
     
     isClick.ShowHealth()
   } 
+ //add the message checks
 
+ if(rectangularCollision({
+  rectangle1:player,
+  rectangle2:message
+ }
+ )){
+  console.log('player intersects message')
+  message.next();
+ }
 
 
 }
@@ -937,7 +954,7 @@ let lastKey = ''
 
 window.addEventListener('keydown', (e) => {
 
-  switch (e.key) {
+  switch ((e.key).toLowerCase()) {
     case ' ':
       if(player.interactionAsset.dialogueIndex>player.interactionAsset.dialogue.length-1 ){
         reset()
@@ -979,7 +996,7 @@ window.addEventListener('keydown', (e) => {
 })
 
 window.addEventListener('keyup', (e) => {
-  switch (e.key) {
+  switch ((e.key).toLowerCase()) {
     case 'w':
       keys.w.pressed = false
       break

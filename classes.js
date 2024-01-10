@@ -501,3 +501,35 @@ class Character extends Sprite {
     this.dialogueIndex = 0
   }
 }
+
+class Message {
+  constructor({
+    position,
+    frames = { max: 1, hold: 10 },
+    scale = 1,
+    width = 200,
+    height= 200,
+    messages = {
+      1 : [
+        'Walk Here','Enter Doors with E', 'Attack with Right Click'
+      ]
+    },
+    level
+  }) {
+    this.messages = messages
+    this.position = position;
+    this.isDelete=false
+    this.width = width;
+    this.height = height
+    this.level = level
+    this.index=0
+  }
+
+  draw() {
+  c.fillStyle = 'white';
+  c.fillText(this.messages[this.level][this.index], this.position.x, this.position.y);
+  }
+  next(){
+    this.index++
+  }
+}
